@@ -1,0 +1,45 @@
+parameters:
+  - name: backupStore
+    displayName: 'Backup 05 store'
+    type: boolean
+    default: true
+  - name: backupBronze
+    displayName: 'Backup 10 bronze'
+    type: boolean
+    default: true
+  - name: backupSilver
+    displayName: 'Backup 20 silver'
+    type: boolean
+    default: true
+  - name: backupGold
+    displayName: 'Backup 30 gold'
+    type: boolean
+    default: true
+
+name: $(Date:yyyyMMdd)_$(Rev:rr)
+
+trigger: none
+
+schedules:
+
+- cron: "0 0 * * 0"
+  displayName: 'Prod: Weekly Backup'
+  branches:
+    include:
+    - release
+  always: true
+  
+stages: 
+  - template: ../stages/stage-build-azure-foundation.yml
+    parameters:
+      checkCodeQuality: ${{ false }}
+
+  - template: ../stages/stage-backup-dls-test-env.yml
+    parameters:
+      environment: 'backup'
+      backupStore: ${{ parameters.backupStore }}
+      backupBronze: ${{ parameters.backupBronze }}
+      backupSilver: ${{ parameters.backupSilver }}
+      backupGold: ${{ parameters.backupGold }}
+      triggerPeriod: 'weekly'
+      dependsOnStage: 'BuildFoundation'

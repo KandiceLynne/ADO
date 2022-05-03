@@ -1,0 +1,48 @@
+{
+    "rules": [
+      {
+        "enabled": true,
+        "name": "weeklybackupsrule",
+        "type": "Lifecycle",
+        "definition": {
+          "actions": {
+            "baseBlob": {
+              "delete": {
+                "daysAfterModificationGreaterThan": 60
+              }
+            }
+          },
+          "filters": {
+            "blobTypes": [
+              "blockBlob"
+            ],
+            "prefixMatch": [
+              "weekly"
+            ]
+          }
+        }
+      },
+      {
+        "enabled": true,
+        "name": "dailybackupsrule",
+        "type": "Lifecycle",
+        "definition": {
+          "actions": {
+            "baseBlob": {
+              "delete": {
+                "daysAfterModificationGreaterThan": 30
+              }
+            }
+          },
+          "filters": {
+            "blobTypes": [
+              "blockBlob"
+            ],
+            "prefixMatch": [
+              "daily"
+            ]
+          }
+        }
+      }
+    ]
+  }

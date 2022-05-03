@@ -1,0 +1,65 @@
+parameters:
+  - name: backups
+    displayName: 'Array of backups'
+    type: object
+    default: []
+  - name: serviceConnectionName
+    displayName: 'Name of the DevOps Service Connection'
+    type: string
+  - name: execute
+    displayName: 'Execute this Job'
+    type: boolean
+    default: false
+  - name: dependsOnJob
+    displayName: 'List of jobs this job depends on'
+    type: string
+    default: ''
+  - name: environment
+    type: string
+    default: ''
+
+jobs:
+  - ${{ each backup in parameters.backups }}:
+    - deployment: backupStorageAccount_${{ backup.id }}
+      timeoutInMinutes: 600
+      workspace:
+          clean: all # what to clean up before the job runs
+      displayName: 'Backup ${{ backup.sourceFolder }}'
+
+
+      ${{ if ne(parameters.dependsOnJob, '') }}:
+        condition: |
+          and
+          (
+            in(dependencies.${{ parameters.dependsOnJob }}.result, 'Succeeded', 'Skipped'),
+            ${{ parameters.execute }}
+          )
+      ${{ if eq(parameters.dependsOnJob, '') }}:
+        condition: ${{ parameters.execute }}
+
+      dependsOn: ${{ parameters.dependsOnJob }}
+
+      pool:
+        name: 'self-hosted-agent-scale-set'
+        
+      environment: ${{ parameters.environment }}
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - task: AzurePowerShell@5
+              inputs:
+                azureSubscription: ${{ parameters.serviceConnectionName }}
+                ScriptType: 'FilePath'
+                ScriptPath: '$(Pipeline.Workspace)/resourceScripts/ps/ps-backup-storage-account.ps1'
+                ScriptArguments: >-
+                            -sourceStorageAccount '${{ backup.sourceStorageAccount }}'
+                            -targetStorageAccount '${{ backup.targetStorageAccount }}'
+                            -sourceFolder '${{ backup.sourceFolder }}'
+                            -targetFolder '${{ backup.targetFolder }}'
+                            -sourceSasToken '${{ backup.sourceSasToken }}'
+                            -targetSasToken '${{ backup.targetSasToken }}'
+                            -triggerPeriod: ${{ backup.triggerPeriod }}
+                            -azCopyConcurrency: ${{ backup.azCopyConcurrency }}
+                azurePowerShellVersion: 'LatestVersion'
+                pwsh: true

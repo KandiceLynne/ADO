@@ -1,0 +1,78 @@
+parameters:
+  - name: dependsOnStage
+    type: string
+  - name: triggerPeriod
+    type: string
+  - name: environment
+    type: string
+  - name: backupStore
+    type: boolean
+  - name: backupBronze
+    type: boolean
+  - name: backupSilver
+    type: boolean
+  - name: backupGold
+    type: boolean
+
+stages:
+
+- stage: Backup
+  displayName: 'Backup'
+  dependsOn: ${{ parameters.dependsOnStage }}
+  variables:
+  - template: ../variables/env-p.yml # hardcoded to production environment, this allows usage of prod variable group while using the backup environment
+  - group: global # This is an Azure DevOps variable group
+  - group: p-env # This is an Azure DevOps variable group
+  - template: ../variables/resource-names.yml
+    parameters:
+      environment: 'p' # hardcoded to production environment, this allows usage of prod variable group while using the backup environment
+
+  jobs:
+
+  # Backup Azure Data Lake Storage data
+  - template: ../.lib/jobs/backup-dls.yml
+    parameters:
+      backups:
+        - id: 1
+          sourceStorageAccount: '${{ variables.ncStorageAccountDataLake }}'
+          targetStorageAccount: '${{ variables.ncStorageAccountBackup }}'
+          sourceFolder: 'dls/05_store'
+          targetFolder: ''
+          sourceSasToken: $(sasKeyDLS)
+          targetSasToken: $(sasKeyBackup)
+          execute: ${{ parameters.backupStore }}
+          triggerPeriod: ${{ parameters.triggerPeriod }}
+          azCopyConcurrency: 500
+        - id: 2
+          sourceStorageAccount: '${{ variables.ncStorageAccountDataLake }}'
+          targetStorageAccount: '${{ variables.ncStorageAccountBackup }}'
+          sourceFolder: 'dls/10_bronze'
+          targetFolder: ''
+          sourceSasToken: $(sasKeyDLS)
+          targetSasToken: $(sasKeyBackup)
+          execute: ${{ parameters.backupBronze }}
+          triggerPeriod: ${{ parameters.triggerPeriod }}
+          azCopyConcurrency: 500
+        - id: 3
+          sourceStorageAccount: '${{ variables.ncStorageAccountDataLake }}'
+          targetStorageAccount: '${{ variables.ncStorageAccountBackup }}'
+          sourceFolder: 'dls/20_silver'
+          targetFolder: ''
+          sourceSasToken: $(sasKeyDLS)
+          targetSasToken: $(sasKeyBackup)
+          execute: ${{ parameters.backupSilver }}
+          triggerPeriod: ${{ parameters.triggerPeriod }}
+          azCopyConcurrency: 500
+        - id: 4
+          sourceStorageAccount: '${{ variables.ncStorageAccountDataLake }}'
+          targetStorageAccount: '${{ variables.ncStorageAccountBackup }}'
+          sourceFolder: 'dls/30_gold'
+          targetFolder: ''
+          sourceSasToken: $(sasKeyDLS)
+          targetSasToken: $(sasKeyBackup)
+          execute: ${{ parameters.backupGold }}
+          triggerPeriod: ${{ parameters.triggerPeriod }}
+          azCopyConcurrency: 500
+      environment: ${{ parameters.environment }}
+      serviceConnectionName: ${{ variables.serviceConnectionName }}
+      execute: ${{ true }}

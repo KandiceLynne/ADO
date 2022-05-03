@@ -1,0 +1,26 @@
+{
+    "rules": [
+      {
+        "enabled": true,
+        "name": "daily-moving-data-lake-store-archive-to-cool",
+        "type": "Lifecycle",
+        "definition": {
+          "actions": {
+            "baseBlob": {
+              "tierToCool": {
+                "daysAfterModificationGreaterThan": 0
+              }
+            }
+          },
+          "filters": {
+            "blobTypes": [
+              "blockBlob"
+            ],
+            "prefixMatch": [
+              "dls/05_store/_archive"
+            ]
+          }
+        }
+      }
+    ]
+  }
