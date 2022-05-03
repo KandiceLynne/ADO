@@ -2,7 +2,7 @@
     "rules": [
       {
         "enabled": true,
-        "name": "daily-moving-data-lake-store-archive-to-cool",
+        "name": "daily-moving-data-lake-store-archive-to-cool-storage",
         "type": "Lifecycle",
         "definition": {
           "actions": {
