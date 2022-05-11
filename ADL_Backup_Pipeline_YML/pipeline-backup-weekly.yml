@@ -22,8 +22,8 @@ trigger: none
 
 schedules:
 
-- cron: "0 0 * * *"
-  displayName: 'Prod: Daily Backup'
+- cron: "0 0 * * 0"
+  displayName: 'Prod: Weekly Backup'
   branches:
     include:
     - release
@@ -41,5 +41,5 @@ stages:
       backupBronze: ${{ parameters.backupBronze }}
       backupSilver: ${{ parameters.backupSilver }}
       backupGold: ${{ parameters.backupGold }}
-      triggerPeriod: 'daily'
+      triggerPeriod: 'weekly'
       dependsOnStage: 'BuildFoundation'
